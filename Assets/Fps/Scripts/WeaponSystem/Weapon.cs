@@ -49,6 +49,6 @@ public abstract class Weapon : MonoBehaviour
 
     void Update()
     {
-        
+        Shoot();
     }
 }
