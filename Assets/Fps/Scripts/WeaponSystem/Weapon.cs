@@ -5,11 +5,11 @@ public abstract class Weapon : MonoBehaviour
     [SerializeField]
     private int maxAmmo;
     private int currentAmmo;
-    private bool isReloading;
 
     [SerializeField]
     private float reloadTime;
     private float remainingReloadTime;
+    public bool IsReloading => remainingReloadTime > 0;
 
     [SerializeField]
     private float bulletSpeed = 5f;
@@ -26,7 +26,7 @@ public abstract class Weapon : MonoBehaviour
 
     public void Attack()
     {
-        if (isReloading) return;
+        if (IsReloading) return;
         if (currentAmmo <= 0) return;
 
         Shoot();
@@ -34,9 +34,8 @@ public abstract class Weapon : MonoBehaviour
 
     public void Reload()
     {
-        if (isReloading) return;
+        if (IsReloading) return;
 
-        isReloading = true;
         remainingReloadTime = reloadTime;
     }
 
@@ -49,6 +48,13 @@ public abstract class Weapon : MonoBehaviour
 
     void Update()
     {
-        Shoot();
+        if(IsReloading) {
+            remainingReloadTime -= Time.deltaTime;
+            if(remainingReloadTime <= 0)
+            {
+                currentAmmo = maxAmmo;
+                remainingReloadTime = 0;
+            }
+        }
     }
 }
