@@ -1,33 +1,62 @@
+using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public abstract class Weapon : MonoBehaviour
 {
+    public event Action<bool> ReloadStateChanged;
+    public event Action AmmoChanged;
+
     [SerializeField]
     private int maxAmmo;
+    public int MaxAmmo => maxAmmo;
+    
     private int currentAmmo;
+    public int CurrentAmmo => currentAmmo;
 
     [SerializeField]
     private float reloadTime;
     private float remainingReloadTime;
     public bool IsReloading => remainingReloadTime > 0;
+    public float ReloadProgress => remainingReloadTime / reloadTime;
 
     [SerializeField]
-    private float bulletSpeed = 5f;
+    protected float bulletSpeed = 5f;
 
     [SerializeField]
-    private Rigidbody bullet;
+    protected Rigidbody bullet;
     [SerializeField]
-    private Transform firePoint;
+    protected Transform firePoint;
+
+    [SerializeField]
+    protected float fireRate = 0.2f;
+    private float fireCooldown = 0;
 
     void Start()
     {
-        currentAmmo = maxAmmo;
+        ChangeAmmo(maxAmmo);
+    }
+
+    private void ChangeAmmo(int newAmmo)
+    {
+        currentAmmo = newAmmo;
+        AmmoChanged?.Invoke();
+    }
+
+    public virtual bool CanAttack(InputAction fireAction)
+    {
+        return fireAction.WasPressedThisFrame();
     }
 
     public void Attack()
     {
         if (IsReloading) return;
         if (currentAmmo <= 0) return;
+        if (fireCooldown > 0) return;
+
+
+        ChangeAmmo(currentAmmo - 1);
+        fireCooldown = fireRate;
 
         Shoot();
     }
@@ -37,11 +66,11 @@ public abstract class Weapon : MonoBehaviour
         if (IsReloading) return;
 
         remainingReloadTime = reloadTime;
+        ReloadStateChanged?.Invoke(true);
     }
 
-    private void Shoot()
+    protected virtual void Shoot()
     {
-        currentAmmo--;
         var bull = Instantiate(bullet, firePoint.position, firePoint.rotation);
         bull.AddForce(firePoint.forward * bulletSpeed, ForceMode.Impulse);
     }
@@ -52,9 +81,12 @@ public abstract class Weapon : MonoBehaviour
             remainingReloadTime -= Time.deltaTime;
             if(remainingReloadTime <= 0)
             {
-                currentAmmo = maxAmmo;
+                ChangeAmmo(maxAmmo);
                 remainingReloadTime = 0;
+                ReloadStateChanged?.Invoke(false);
             }
         }
+
+        fireCooldown -= Time.deltaTime;
     }
 }
