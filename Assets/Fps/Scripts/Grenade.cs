@@ -9,7 +9,7 @@ public class Grenade : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(BoomBoomRoutine())
+        StartCoroutine(BoomBoomRoutine());
     }
 
     private IEnumerator BoomBoomRoutine()
